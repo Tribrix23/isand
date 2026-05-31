@@ -1,11 +1,639 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iSand Store – Shop Premium Products</title>
+  <meta name="description" content="Discover premium products at iSand Store. Browse our curated catalog, read reviews, and shop with ease." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'] },
+          colors: {
+            /* ── Purple (primary) blending into navy ── */
+            brand: {
+              50:  '#ede9fe',
+              100: '#ddd6fe',
+              200: '#c4b5fd',
+              300: '#a78bfa',
+              400: '#8b5cf6',
+              500: '#7c3aed',
+              600: '#6d28d9',
+              700: '#5b21b6',
+              800: '#4c1d95',
+              900: '#3b0764',
+            },
+            /* ── Cyan accent (soft, blends with navy) ── */
+            accent: {
+              50:  '#f0fdff',
+              100: '#ccf7fe',
+              200: '#99eefb',
+              300: '#52dff6',
+              400: '#17c9e8',
+              500: '#06afd0',
+              600: '#088bad',
+              700: '#0c6f8c',
+              800: '#105971',
+              900: '#124a5e',
+            },
+            /* ── Surfaces: dark navy-purple blend ── */
+            surface: '#12112a',
+            card:    '#1c1a3a',
+            border:  '#2e2b55',
+          },
+          boxShadow: {
+            glow:   '0 0 32px rgba(124,58,237,0.35)',
+            glowCy: '0 0 24px rgba(6,175,208,0.25)',
+            card:   '0 4px 28px rgba(10,8,40,0.45)',
+          },
+          animation: {
+            'fade-in':    'fadeIn 0.4s ease-out',
+            'slide-up':   'slideUp 0.4s ease-out',
+            'slide-right':'slideRight 0.35s ease-out',
+          },
+          keyframes: {
+            fadeIn:    { from:{ opacity:0 }, to:{ opacity:1 } },
+            slideUp:   { from:{ opacity:0, transform:'translateY(24px)' }, to:{ opacity:1, transform:'translateY(0)' } },
+            slideRight:{ from:{ opacity:0, transform:'translateX(-24px)' }, to:{ opacity:1, transform:'translateX(0)' } },
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* ── Base ── */
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', sans-serif;
+      /* Rich dark navy-to-purple diagonal gradient */
+      background: linear-gradient(145deg, #090820 0%, #0e0c26 30%, #140e30 60%, #1a0d38 100%);
+      background-attachment: fixed;
+      color: #e2dff5;
+    }
+
+    /* ── scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #12112a; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#7c3aed,#06afd0); border-radius: 4px; }
+
+    /* ── view layout ── */
+    .view { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
+    .view.active { display: flex; }
+    .content-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+    .scroll-main { flex: 1; overflow-y: auto; min-width: 0; }
+    .sidebar-fixed { overflow-y: auto; flex-shrink: 0; }
+
+    /* ── glass card — dark frosted ── */
+    .glass {
+      background: rgba(28, 26, 60, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.18);
+    }
+
+    /* ── product card ── */
+    .product-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      cursor: pointer;
+      background: linear-gradient(160deg, #1e1b40 0%, #1a1838 100%);
+      border: 1px solid #2e2b55;
+    }
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 48px rgba(124,58,237,0.28), 0 4px 16px rgba(6,175,208,0.12);
+      border-color: #7c3aed;
+    }
+    .product-card:active { transform: translateY(-2px) scale(0.98); }
+
+    /* ── filter pills ── */
+    .filter-pill {
+      transition: all 0.25s ease;
+      white-space: nowrap;
+      background: rgba(28,26,58,0.7);
+      color: #a89fd4;
+    }
+    .filter-pill.active {
+      background: linear-gradient(135deg, #6d28d9, #06afd0);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 0 16px rgba(124,58,237,0.4);
+    }
+    .filter-pill:not(.active):hover {
+      border-color: #7c3aed;
+      color: #c4b5fd;
+      background: rgba(124,58,237,0.15);
+    }
+
+    /* ── qty button ── */
+    .qty-btn { transition: all 0.2s; }
+    .qty-btn:hover { background: linear-gradient(135deg,#6d28d9,#06afd0); color: #fff; }
+
+    /* ── badge pulse ── */
+    @keyframes pulse-badge { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+    .badge-pulse { animation: pulse-badge 0.4s ease; }
+
+    /* ── inputs / selects ── */
+    input, textarea, select {
+      background: rgba(18,17,42,0.8) !important;
+      color: #e2dff5 !important;
+    }
+    input::placeholder, textarea::placeholder { color: #6b65a0 !important; }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(124,58,237,0.5);
+    }
+
+    /* ── toast ── */
+    #toast { transition: opacity 0.3s ease, transform 0.3s ease; }
+
+    /* ── nav active ── */
+    .nav-link.nav-active {
+      background: linear-gradient(135deg,#6d28d9,#5b21b6);
+      color: #fff !important;
+      box-shadow: 0 0 16px rgba(124,58,237,0.35);
+    }
+    .nav-link:not(.nav-active):hover {
+      background: rgba(124,58,237,0.15);
+      color: #c4b5fd;
+    }
+
+    /* ── gradient text (logo, price) ── */
+    .grad-text {
+      background: linear-gradient(135deg,#a78bfa 0%,#52dff6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── primary gradient button ── */
+    .btn-gradient {
+      background: linear-gradient(135deg, #6d28d9 0%, #06afd0 100%);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(109,40,217,0.4);
+    }
+    .btn-gradient:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(109,40,217,0.55);
+    }
+    .btn-gradient:active { transform: translateY(0); }
+
+    /* ── shimmer (dark) ── */
+    @keyframes shimmer {
+      0%  { background-position: -400px 0; }
+      100%{ background-position:  400px 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #1c1a3a 25%, #2e2b55 50%, #1c1a3a 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.4s infinite;
+    }
+
+    /* ── select option color fix (dark theme) ── */
+    option { background: #1c1a3a; color: #e2dff5; }
+  </style>
 </head>
 <body>
-    
+
+<!-- ═══════════════════════════════════════════════
+     LANDING PAGE VIEW
+═══════════════════════════════════════════════ -->
+<div id="view-landing" class="view active animate-fade-in">
+
+  <!-- ── Top Nav ── -->
+  <header class="shrink-0 z-50 glass border-b border-border" style="border-bottom-color:rgba(139,92,246,0.2)">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
+      <!-- Logo -->
+      <a href="#" id="nav-home" class="flex items-center gap-2 shrink-0">
+        <div class="w-9 h-9 rounded-xl btn-gradient flex items-center justify-center shadow-glow">
+          <i class="fa-solid fa-wave-square text-white text-sm"></i>
+        </div>
+        <span class="font-black text-lg tracking-tight grad-text hidden sm:block">iSand</span>
+      </a>
+
+      <!-- Search -->
+      <div class="flex-1 relative max-w-xl mx-auto">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 text-sm"></i>
+        <input id="search-input" type="text" placeholder="Search products…"
+          class="w-full border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm transition" style="background:rgba(18,17,42,0.7)" />
+        <kbd class="hidden sm:block absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 bg-surface px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
+      </div>
+
+      <!-- Cart icon -->
+      <button id="cart-icon-btn" class="relative p-2.5 rounded-xl border border-border hover:border-brand-400 transition group" style="background:rgba(28,26,58,0.7)" aria-label="Open cart">
+        <i class="fa-solid fa-cart-shopping text-brand-300 group-hover:text-accent-300 transition"></i>
+        <span id="cart-badge" class="absolute -top-1.5 -right-1.5 btn-gradient text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Content row: sidebar + main + cart — fills remaining height ── -->
+  <div class="content-row max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6 gap-6">
+
+    <!-- ── Left Sidebar: Navigation ── -->
+    <aside class="hidden lg:flex flex-col gap-2 w-52 shrink-0 sidebar-fixed">
+      <div class="glass rounded-2xl p-4 animate-slide-right">
+        <p class="text-xs font-semibold text-brand-400 uppercase tracking-widest mb-3">Navigation</p>
+        <nav class="flex flex-col gap-1">
+          <button id="nav-home-btn" onclick="setActiveNav(this)"
+            class="nav-link nav-active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white transition w-full text-left">
+            <i class="fa-solid fa-house w-4"></i> Home
+          </button>
+          <button id="nav-reco-btn" onclick="showRecommendations(); setActiveNav(this)"
+            class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-brand-200 transition w-full text-left">
+            <i class="fa-solid fa-star w-4"></i> Recommendations
+          </button>
+          <button class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-brand-200 transition w-full text-left">
+            <i class="fa-solid fa-tag w-4"></i> Deals
+          </button>
+          <button class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-brand-200 transition w-full text-left">
+            <i class="fa-solid fa-heart w-4"></i> Wishlist
+          </button>
+        </nav>
+
+        <div class="mt-6 pt-4" style="border-top:1px solid rgba(139,92,246,0.2)">
+          <p class="text-xs font-semibold text-accent-400 uppercase tracking-widest mb-3">Categories</p>
+          <div id="category-list" class="flex flex-col gap-1">
+            <!-- injected by JS -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Center: Catalog (ONLY this area scrolls) ── -->
+    <main class="scroll-main flex flex-col gap-5 animate-slide-up px-1 pb-8">
+
+      <!-- ── Banner (full text visible, generous padding) ── -->
+      <div class="relative overflow-hidden rounded-2xl flex items-center gap-6 min-h-[200px]"
+        style="background: linear-gradient(135deg,#3b0764 0%,#5b21b6 35%,#0c6f8c 80%,#0e0c26 100%); padding: 1.75rem 2rem;">
+        <!-- Glow orbs -->
+        <div class="absolute -left-10 -top-10 w-48 h-48 rounded-full" style="background:radial-gradient(circle,rgba(139,92,246,0.25) 0%,transparent 70%)"></div>
+        <div class="absolute right-0 bottom-0 w-40 h-40 rounded-full" style="background:radial-gradient(circle,rgba(6,175,208,0.18) 0%,transparent 70%)"></div>
+        <div class="relative flex-1 z-10">
+          <p class="text-accent-300 text-xs font-semibold uppercase tracking-widest mb-2">✦ New Arrivals 2026</p>
+          <h1 class="text-2xl sm:text-3xl font-black text-white leading-snug">Shop Smarter,<br/>Live Better.</h1>
+          <p class="text-brand-200 text-sm mt-2 mb-4">Free delivery on orders over $50</p>
+          <button class="font-bold text-sm px-5 py-2.5 rounded-xl transition shadow-glow text-white" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);backdrop-filter:blur(8px)">
+            Explore Now <i class="fa-solid fa-arrow-right ml-1.5"></i>
+          </button>
+        </div>
+        <div class="hidden sm:flex text-7xl opacity-20 select-none z-10">🛍️</div>
+      </div>
+
+      <!-- ── Filters ── -->
+      <div class="flex gap-2 overflow-x-auto pb-10" style="scrollbar-width:none">
+        <button class="filter-pill active border border-border rounded-full px-4 pb-[1.3rem]  pt-2 text-xs font-semibold" onclick="filterProducts('all', this)">All</button>
+        <button class="filter-pill border border-border rounded-full px-4 pb-[1.3rem]  pt-2 text-xs font-semibold transition" onclick="filterProducts('electronics', this)">Electronics</button>
+        <button class="filter-pill border border-border rounded-full px-4 pb-[1.3rem]  pt-2  text-xs font-semibold transition" onclick="filterProducts('fashion', this)">Fashion</button>
+        <button class="filter-pill border border-border rounded-full px-4 pb-[1.3rem]  pt-2 text-xs font-semibold transition" onclick="filterProducts('accessories', this)">Accessories</button>
+        <button class="filter-pill border border-border rounded-full px-4 pb-[1.3rem]  pt-2 text-xs font-semibold transition" onclick="filterProducts('home', this)">Home &amp; Living</button>
+        <button class="filter-pill border border-border rounded-full px-4 pb-[1.3rem]  pt-2 text-xs font-semibold transition" onclick="filterProducts('sports', this)">Sports</button>
+      </div>
+
+      <!-- ── Sort bar ── -->
+      <div class="flex items-center justify-between">
+        <p id="product-count" class="text-sm text-brand-300"><span class="text-white font-semibold">0</span> products found</p>
+        <select id="sort-select" onchange="sortProducts(this.value)"
+          class="border border-border text-sm rounded-xl px-3 py-2 focus:border-brand-500 transition">
+          <option value="default">Sort: Featured</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="rating">Best Rated</option>
+          <option value="newest">Newest</option>
+        </select>
+      </div>
+
+      <!-- ── Product Grid ── -->
+      <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <!-- injected by JS -->
+      </div>
+    </main>
+
+    <!-- ── Right Sidebar: Cart ── -->
+    <aside class="hidden xl:flex flex-col w-80 shrink-0 sidebar-fixed">
+      <div class="glass rounded-2xl p-5 flex flex-col gap-4 animate-slide-up h-full overflow-y-auto">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-brand-200 flex items-center gap-2">
+            <i class="fa-solid fa-cart-shopping text-accent-400"></i> Cart
+          </h2>
+          <button onclick="clearCart()" class="text-xs text-brand-300 hover:text-red-400 transition">Clear all</button>
+        </div>
+
+        <!-- Cart items -->
+        <div id="cart-items" class="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+          <div id="cart-empty" class="text-center py-6 text-brand-300">
+            <i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-brand-400 opacity-40"></i>
+            <p class="text-sm">Your cart is empty</p>
+          </div>
+        </div>
+
+        <!-- Delivery -->
+        <div class="rounded-xl p-3 flex items-center gap-3 border border-border" style="background:rgba(12,111,140,0.12)">
+          <i class="fa-solid fa-truck text-accent-400"></i>
+          <div>
+            <p class="text-xs text-brand-300">Estimated Delivery</p>
+            <p id="delivery-estimate" class="text-sm font-semibold text-white">—</p>
+          </div>
+        </div>
+
+        <!-- Coupon -->
+        <div class="flex gap-2">
+          <input id="coupon-input" type="text" placeholder="Coupon code"
+            class="flex-1 border border-border rounded-xl px-3 py-2 text-sm transition" />
+          <button onclick="applyCoupon()" class="btn-gradient text-white text-sm font-semibold px-3 py-2 rounded-xl">Apply</button>
+        </div>
+        <div id="coupon-status" class="hidden text-xs px-2 text-accent-300"></div>
+
+        <!-- Payment -->
+        <div>
+          <p class="text-xs text-brand-300 mb-1.5">Payment Method</p>
+          <select id="payment-method" class="w-full border border-border text-sm rounded-xl px-3 py-2.5 focus:border-brand-500 transition">
+            <option value="card">💳 Credit / Debit Card</option>
+            <option value="paypal">🅿️ PayPal</option>
+            <option value="crypto">₿ Cryptocurrency</option>
+            <option value="cod">💵 Cash on Delivery</option>
+          </select>
+        </div>
+
+        <div class="border-t border-border"></div>
+
+        <!-- Totals -->
+        <div class="flex flex-col gap-1.5 text-sm">
+          <div class="flex justify-between text-brand-200"><span>Subtotal</span><span id="subtotal">$0.00</span></div>
+          <div class="flex justify-between text-brand-200"><span>Discount</span><span id="discount-amount" class="text-accent-300">-$0.00</span></div>
+          <div class="flex justify-between text-brand-200"><span>Shipping</span><span id="shipping-cost">$0.00</span></div>
+          <div class="flex justify-between text-white font-bold text-base mt-1">
+            <span>Total</span><span id="total-price" class="grad-text">$0.00</span>
+          </div>
+        </div>
+
+        <button id="buy-btn" onclick="checkout()"
+          class="btn-gradient w-full text-white font-bold py-3 rounded-xl shadow-glow flex items-center justify-center gap-2">
+          <i class="fa-solid fa-lock text-sm"></i> Checkout
+        </button>
+      </div>
+    </aside>
+
+  </div><!-- /content-row -->
+
+  <!-- Mobile cart FAB -->
+  <button id="mobile-cart-fab" onclick="toggleMobileCart()"
+    class="xl:hidden fixed bottom-6 right-6 z-50 btn-gradient text-white w-14 h-14 rounded-full shadow-glow flex items-center justify-center">
+    <i class="fa-solid fa-cart-shopping text-lg"></i>
+    <span id="fab-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+  </button>
+
+  <!-- Mobile cart drawer -->
+  <div id="mobile-cart-overlay" class="xl:hidden fixed inset-0 z-40 bg-black/40 hidden" onclick="toggleMobileCart()"></div>
+  <div id="mobile-cart-drawer" class="xl:hidden fixed bottom-0 left-0 right-0 z-50 glass rounded-t-3xl p-5 flex flex-col gap-4 translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto border-t border-border shadow-glow">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-2"></div>
+    <div class="flex items-center justify-between">
+      <h2 class="font-bold text-brand-700 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-accent-500"></i> Cart</h2>
+      <button onclick="clearCart()" class="text-xs text-slate-400 hover:text-red-500 transition">Clear all</button>
+    </div>
+    <div id="mobile-cart-items" class="flex flex-col gap-2"></div>
+    <div id="mobile-cart-empty" class="text-center py-6 text-slate-400"><i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-brand-200"></i><p class="text-sm">Your cart is empty</p></div>
+    <div class="bg-surface rounded-xl p-3 flex items-center gap-3 border border-border">
+      <i class="fa-solid fa-truck text-accent-500"></i>
+      <div><p class="text-xs text-slate-400">Estimated Delivery</p><p id="m-delivery-estimate" class="text-sm font-semibold text-brand-700">—</p></div>
+    </div>
+    <div class="flex gap-2">
+      <input id="m-coupon-input" type="text" placeholder="Coupon code" class="flex-1 bg-white border border-border rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-brand-500 transition" />
+      <button onclick="applyMobileCoupon()" class="btn-gradient text-white text-sm font-semibold px-3 py-2 rounded-xl">Apply</button>
+    </div>
+    <select id="m-payment-method" class="w-full bg-white border border-border text-sm text-slate-600 rounded-xl px-3 py-2.5 focus:border-brand-500 transition">
+      <option value="card">💳 Credit / Debit Card</option>
+      <option value="paypal">🅿️ PayPal</option>
+      <option value="crypto">₿ Cryptocurrency</option>
+      <option value="cod">💵 Cash on Delivery</option>
+    </select>
+    <div class="border-t border-border"></div>
+    <div class="flex flex-col gap-1.5 text-sm">
+      <div class="flex justify-between text-slate-500"><span>Subtotal</span><span id="m-subtotal">$0.00</span></div>
+      <div class="flex justify-between text-slate-500"><span>Discount</span><span id="m-discount-amount" class="text-green-600">-$0.00</span></div>
+      <div class="flex justify-between text-slate-500"><span>Shipping</span><span id="m-shipping-cost">$0.00</span></div>
+      <div class="flex justify-between text-brand-800 font-bold text-base mt-1"><span>Total</span><span id="m-total-price">$0.00</span></div>
+    </div>
+    <button onclick="checkout()" class="btn-gradient w-full text-white font-bold py-3 rounded-xl shadow-glow flex items-center justify-center gap-2">
+      <i class="fa-solid fa-lock text-sm"></i> Checkout
+    </button>
+  </div>
+
+</div><!-- /view-landing -->
+
+
+<!-- ═══════════════════════════════════════════════
+     PRODUCT DETAIL VIEW
+═══════════════════════════════════════════════ -->
+<div id="view-detail" class="view animate-fade-in">
+
+  <!-- Detail header (fixed, never scrolls) -->
+  <header class="shrink-0 z-50 glass border-b border-border shadow-sm">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
+      <button id="back-btn" onclick="goBack()"
+        class="flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-900 bg-white border border-border hover:border-brand-400 px-3 py-2 rounded-xl transition shadow-sm">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span class="hidden sm:inline">Back to Store</span>
+      </button>
+      <div class="flex-1 min-w-0">
+        <p id="detail-breadcrumb" class="text-sm text-slate-400 truncate">Store / <span class="text-brand-700 font-semibold"></span></p>
+      </div>
+      <button id="detail-cart-btn" onclick="toggleMobileCart()"
+        class="relative p-2.5 rounded-xl bg-white border border-border hover:border-brand-400 transition group shadow-sm" aria-label="Open cart">
+        <i class="fa-solid fa-cart-shopping text-slate-500 group-hover:text-brand-600 transition"></i>
+        <span id="detail-cart-badge" class="absolute -top-1.5 -right-1.5 btn-gradient text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Detail content row -->
+  <div class="content-row max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6 gap-6">
+
+    <!-- ── Product Detail Center (scrolls) ── -->
+    <main class="scroll-main flex flex-col gap-6 animate-slide-up px-1 pb-8">
+
+      <!-- Product top section -->
+      <div class="flex flex-col lg:flex-row gap-6">
+
+        <!-- Product Image -->
+        <div class="lg:w-80 xl:w-96 shrink-0">
+          <div class="glass rounded-2xl overflow-hidden aspect-square flex items-center justify-center">
+            <img id="detail-image" src="" alt="Product" class="w-full h-full object-cover" />
+          </div>
+          <!-- Thumbnail strip -->
+          <div class="flex gap-2 mt-3">
+            <div id="detail-img-thumb" class="w-16 h-16 rounded-xl border-2 border-brand-500 overflow-hidden cursor-pointer">
+              <img id="detail-thumb-img" src="" alt="" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="flex-1 flex flex-col gap-4">
+          <!-- Badge + Name -->
+          <div>
+            <span id="detail-category-badge" class="inline-block bg-brand-100 text-brand-700 text-xs font-semibold px-3 py-1 rounded-full mb-2"></span>
+            <h1 id="detail-name" class="text-2xl sm:text-3xl font-black text-brand-900 leading-tight"></h1>
+            <p id="detail-store" class="text-slate-500 mt-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-store text-accent-500 text-xs"></i>
+              <span></span>
+            </p>
+          </div>
+
+          <!-- Rating row -->
+          <div class="flex items-center gap-3">
+            <div id="detail-stars" class="flex gap-0.5"></div>
+            <span id="detail-rating-text" class="text-sm font-semibold text-white"></span>
+            <span id="detail-review-count" class="text-sm text-slate-400"></span>
+          </div>
+
+          <!-- Price -->
+          <div class="flex items-baseline gap-3">
+            <span id="detail-price" class="text-4xl font-black grad-text"></span>
+            <span id="detail-original-price" class="text-lg text-slate-400 line-through"></span>
+            <span id="detail-discount-badge" class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-lg"></span>
+          </div>
+
+          <!-- Stock -->
+          <p id="detail-stock" class="text-sm font-medium"></p>
+
+          <!-- Description -->
+          <div class="bg-surface rounded-xl p-4 max-h-48 overflow-y-auto border border-border">
+            <p id="detail-description" class="text-slate-600 text-sm leading-relaxed"></p>
+          </div>
+
+          <!-- Qty + Add to Cart -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center bg-card border border-border rounded-xl overflow-hidden">
+              <button class="qty-btn w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition" onclick="changeDetailQty(-1)">
+                <i class="fa-solid fa-minus text-xs"></i>
+              </button>
+              <span id="detail-qty" class="w-10 text-center font-bold text-white">1</span>
+              <button class="qty-btn w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition" onclick="changeDetailQty(1)">
+                <i class="fa-solid fa-plus text-xs"></i>
+              </button>
+            </div>
+            <button id="add-to-cart-btn" onclick="addCurrentToCart()"
+              class="btn-gradient flex-1 sm:flex-none text-white font-bold py-2.5 px-6 rounded-xl shadow-glow flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cart-plus"></i> Add to Cart
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center bg-white border border-border rounded-xl text-slate-400 hover:text-red-500 hover:border-red-400 transition" aria-label="Wishlist">
+              <i class="fa-regular fa-heart"></i>
+            </button>
+          </div>
+
+          <!-- Add review button -->
+          <button onclick="toggleReviewForm()"
+            class="flex items-center gap-2 text-sm text-accent-600 hover:text-accent-700 transition font-medium self-start">
+            <i class="fa-solid fa-pen-to-square"></i> Write a Review
+          </button>
+        </div>
+      </div>
+
+      <!-- Review form (toggle) -->
+      <div id="review-form-panel" class="hidden glass rounded-2xl p-5 animate-slide-up border border-brand-100">
+        <h3 class="font-bold text-brand-800 mb-4">Share Your Experience</h3>
+        <div class="flex gap-2 mb-4" id="review-star-selector">
+          <button class="text-2xl text-slate-300 hover:text-yellow-400 transition review-star" data-val="1" onclick="setReviewStar(1)">★</button>
+          <button class="text-2xl text-slate-300 hover:text-yellow-400 transition review-star" data-val="2" onclick="setReviewStar(2)">★</button>
+          <button class="text-2xl text-slate-300 hover:text-yellow-400 transition review-star" data-val="3" onclick="setReviewStar(3)">★</button>
+          <button class="text-2xl text-slate-300 hover:text-yellow-400 transition review-star" data-val="4" onclick="setReviewStar(4)">★</button>
+          <button class="text-2xl text-slate-300 hover:text-yellow-400 transition review-star" data-val="5" onclick="setReviewStar(5)">★</button>
+        </div>
+        <input id="review-name" type="text" placeholder="Your name"
+          class="w-full bg-white border border-border rounded-xl px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 mb-3 focus:border-brand-500 transition" />
+        <textarea id="review-text" rows="3" placeholder="Tell others what you think…"
+          class="w-full bg-white border border-border rounded-xl px-3 py-2.5 text-sm text-slate-700 placeholder-slate-400 mb-3 resize-none focus:border-brand-500 transition"></textarea>
+        <div class="flex gap-2">
+          <button onclick="submitReview()" class="btn-gradient text-white font-semibold text-sm px-5 py-2.5 rounded-xl">Submit Review</button>
+          <button onclick="toggleReviewForm()" class="text-slate-500 hover:text-brand-700 text-sm px-4 py-2.5 rounded-xl border border-border hover:border-brand-300 transition">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Reviews section -->
+      <div class="glass rounded-2xl p-5 border border-brand-100">
+        <h3 class="font-bold text-brand-800 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-comments text-accent-500"></i> Customer Reviews
+          <span id="review-total-badge" class="bg-surface border border-border text-xs font-semibold text-slate-500 px-2 py-0.5 rounded-full"></span>
+        </h3>
+        <div id="reviews-list" class="flex flex-col gap-4 max-h-80 overflow-y-auto pr-1">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+      <!-- Add to cart (sticky bottom on mobile) -->
+      <div class="lg:hidden sticky bottom-4 z-40 flex justify-center">
+        <button onclick="addCurrentToCart()"
+          class="btn-gradient text-white font-bold py-3 px-8 rounded-2xl shadow-glow flex items-center gap-2">
+          <i class="fa-solid fa-cart-plus"></i> Add to Cart
+        </button>
+      </div>
+
+    </main>
+
+    <!-- ── Right: Cart (detail view, fixed) ── -->
+    <aside class="hidden xl:flex flex-col w-80 shrink-0 sidebar-fixed">
+      <div class="glass rounded-2xl p-5 flex flex-col gap-4 h-full overflow-y-auto border border-brand-100">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-brand-700 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-accent-500"></i> Cart</h2>
+          <button onclick="clearCart()" class="text-xs text-slate-400 hover:text-red-500 transition">Clear all</button>
+        </div>
+        <div id="d-cart-items" class="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+          <div id="d-cart-empty" class="text-center py-6 text-slate-400"><i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-brand-200"></i><p class="text-sm">Your cart is empty</p></div>
+        </div>
+        <div class="bg-surface rounded-xl p-3 flex items-center gap-3 border border-border">
+          <i class="fa-solid fa-truck text-accent-500"></i>
+          <div><p class="text-xs text-slate-400">Estimated Delivery</p><p id="d-delivery-estimate" class="text-sm font-semibold text-brand-700">—</p></div>
+        </div>
+        <div class="flex gap-2">
+          <input id="d-coupon-input" type="text" placeholder="Coupon code" class="flex-1 bg-white border border-border rounded-xl px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-brand-500 transition" />
+          <button onclick="applyDetailCoupon()" class="btn-gradient text-white text-sm font-semibold px-3 py-2 rounded-xl">Apply</button>
+        </div>
+        <select id="d-payment-method" class="w-full bg-white border border-border text-sm text-slate-600 rounded-xl px-3 py-2.5 focus:border-brand-500 transition">
+          <option value="card">💳 Credit / Debit Card</option>
+          <option value="paypal">🅿️ PayPal</option>
+          <option value="crypto">₿ Cryptocurrency</option>
+          <option value="cod">💵 Cash on Delivery</option>
+        </select>
+        <div class="border-t border-border"></div>
+        <div class="flex flex-col gap-1.5 text-sm">
+          <div class="flex justify-between text-slate-500"><span>Subtotal</span><span id="d-subtotal">$0.00</span></div>
+          <div class="flex justify-between text-slate-500"><span>Discount</span><span id="d-discount-amount" class="text-green-600">-$0.00</span></div>
+          <div class="flex justify-between text-slate-500"><span>Shipping</span><span id="d-shipping-cost">$0.00</span></div>
+          <div class="flex justify-between text-brand-800 font-bold text-base mt-1"><span>Total</span><span id="d-total-price">$0.00</span></div>
+        </div>
+        <button onclick="checkout()" class="btn-gradient w-full text-white font-bold py-3 rounded-xl shadow-glow flex items-center justify-center gap-2">
+          <i class="fa-solid fa-lock text-sm"></i> Checkout
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</div><!-- /view-detail -->
+
+
+<!-- ── Toast notification ── -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] bg-white border border-brand-200 text-brand-800 text-sm font-medium px-5 py-3 rounded-2xl shadow-card flex items-center gap-3 opacity-0 pointer-events-none -translate-y-2 transition-all duration-300">
+  <i id="toast-icon" class="fa-solid fa-circle-check text-green-500"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ── Checkout modal ── -->
+<div id="checkout-modal" class="fixed inset-0 z-[998] flex items-center justify-center bg-black/40 hidden">
+  <div class="glass rounded-2xl p-8 max-w-sm w-full mx-4 text-center animate-slide-up border border-brand-100 shadow-glow">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+    </div>
+    <h2 class="text-xl font-black text-brand-800 mb-2">Order Placed! 🎉</h2>
+    <p class="text-slate-500 text-sm mb-6">Your order has been placed successfully. You'll receive a confirmation email shortly.</p>
+    <button onclick="closeCheckout()" class="btn-gradient w-full text-white font-bold py-3 rounded-xl shadow-glow">Continue Shopping</button>
+  </div>
+</div>
+
+<script src="../assets/javascript/customer.js"></script>
 </body>
 </html>
