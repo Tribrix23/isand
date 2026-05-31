@@ -1,5 +1,5 @@
 /**
- * seller.js – iSand Seller Dashboard Logic
+ * seller.js – Talisay Hardware Dashboard Logic
  * Handles: dashboard analytics (chart + stats), product catalog management,
  *          add/delete products, search, pagination, and product detail popup.
  */
