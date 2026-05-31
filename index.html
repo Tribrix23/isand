@@ -543,16 +543,7 @@
       track.style.left  = (br.left - wr.left) + 'px';
       track.style.width = br.width + 'px';
     }
-
-    /* Use click listeners so app.js setRole can do its own logic */
-    document.querySelectorAll('.role-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        moveTrack(this);
-      });
-    });
-
+    
     /* Initial position after layout */
     requestAnimationFrame(() => {
       const active = document.querySelector('.role-btn.active');

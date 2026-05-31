@@ -1,15 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const savedRole = localStorage.getItem('userRole');
-  if (savedRole) {
-    const role = savedRole;
-    const btn = document.getElementById(`btn-${role}`);
-    if (btn) setRole(role, btn);
+  const savedRole = localStorage.getItem('userRole') || 'customer';
+
+  const btn = document.getElementById(`btn-${savedRole}`);
+
+  if (btn) {
+    setRole(savedRole, btn);
   }
+
   animateOnLoad();
 });
 
 function animateOnLoad() {
   const logo = document.querySelector('.fa-wave-square');
+
   if (logo) {
     logo.parentElement.classList.add('animate-float');
   }
@@ -17,57 +20,92 @@ function animateOnLoad() {
 
 function setRole(role, btn) {
   const roles = ['customer', 'seller', 'admin'];
+
   roles.forEach(r => {
     const b = document.getElementById(`btn-${r}`);
+
     if (b) {
       b.classList.remove('active');
-      const icon = b.querySelector('i');
-      if (icon) icon.classList.add('animate-pulse-glow');
-      setTimeout(() => icon?.classList.remove('animate-pulse-glow'), 300);
     }
   });
+
   btn.classList.add('active');
+
   localStorage.setItem('userRole', role);
+
+  /* move slider */
+  const track = document.getElementById('role-track');
+  const wrap = document.getElementById('role-wrap');
+
+  if (track && wrap) {
+    const wr = wrap.getBoundingClientRect();
+    const br = btn.getBoundingClientRect();
+
+    track.style.left = (br.left - wr.left) + 'px';
+    track.style.width = br.width + 'px';
+  }
 }
 
 function handleLogin(e) {
   e.preventDefault();
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
   const errorMsg = document.getElementById('error-msg');
+
   const role = localStorage.getItem('userRole') || 'customer';
 
   const credentials = {
-    customer: { username: 'customer', password: 'customer' },
-    seller: { username: 'seller', password: 'seller' },
-    admin: { username: 'admin', password: 'admin' }
+    customer: {
+      username: 'customer',
+      password: 'customer'
+    },
+
+    seller: {
+      username: 'seller',
+      password: 'seller'
+    },
+
+    admin: {
+      username: 'admin',
+      password: 'admin'
+    }
   };
 
-  const valid = credentials[role] &&
-                username === credentials[role].username &&
-                password === credentials[role].password;
+  const valid =
+    credentials[role] &&
+    username === credentials[role].username &&
+    password === credentials[role].password;
 
   if (valid) {
-    errorMsg.classList.add('hidden');
-    const form = document.getElementById('login-form');
-    form.classList.add('animate-slide-up');
-    setTimeout(() => {
-      localStorage.setItem('userName', username);
-      localStorage.setItem('userRole', role);
-      const adminPages = { admin: 'admin/dashboard.html', customer: 'customer.html', seller: 'seller.html' };
-      window.location.href = `pages/${adminPages[role] || `${role}.html`}`;
-    }, 300);
+    errorMsg.style.display = 'none';
+
+    localStorage.setItem('userName', username);
+
+    const redirectPages = {
+      customer: 'pages/customer.html',
+      seller: 'pages/seller.html',
+      admin: 'admin/dashboard.html'
+    };
+
+    window.location.href = redirectPages[role];
   } else {
     errorMsg.textContent = 'Invalid credentials. Please try again.';
-    errorMsg.classList.remove('hidden');
+    errorMsg.style.display = 'block';
+
     shakeForm();
   }
 }
 
 function shakeForm() {
   const form = document.getElementById('login-form');
-  form.classList.add('animate-shake');
-  setTimeout(() => form.classList.remove('animate-shake'), 500);
+
+  form.classList.remove('shake');
+
+  void form.offsetWidth;
+
+  form.classList.add('shake');
 }
 
 class AnimationLib {
