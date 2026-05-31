@@ -1,11 +1,661 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talisay Hardware – Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50:  '#ede9fe', 100: '#ddd6fe', 200: '#c4b5fd',
+              300: '#a78bfa', 400: '#8b5cf6', 500: '#7c3aed',
+              600: '#6d28d9', 700: '#5b21b6', 800: '#4c1d95', 900: '#3b0764',
+            },
+            accent: {
+              50:  '#f0fdff', 100: '#ccf7fe', 200: '#99eefb',
+              300: '#52dff6', 400: '#17c9e8', 500: '#06afd0',
+              600: '#088bad', 700: '#0c6f8c', 800: '#105971', 900: '#124a5e',
+            },
+            surface: '#12112a',
+            card:    '#1c1a3a',
+            border:  '#2e2b55',
+          },
+          boxShadow: {
+            glow:   '0 0 32px rgba(124,58,237,0.35)',
+            glowCy: '0 0 24px rgba(6,175,208,0.25)',
+            card:   '0 4px 28px rgba(10,8,40,0.45)',
+          },
+          animation: {
+            'fade-in':  'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+          },
+          keyframes: {
+            fadeIn:  { from:{ opacity:0 }, to:{ opacity:1 } },
+            slideUp: { from:{ opacity:0, transform:'translateY(24px)' }, to:{ opacity:1, transform:'translateY(0)' } },
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(145deg, #090820 0%, #0e0c26 30%, #140e30 60%, #1a0d38 100%);
+      background-attachment: fixed;
+      color: #e2dff5;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #12112a; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#7c3aed,#06afd0); border-radius: 4px; }
+
+    .glass {
+      background: rgba(28, 26, 60, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.18);
+    }
+
+    .grad-text {
+      background: linear-gradient(135deg, #a78bfa 0%, #52dff6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn-gradient {
+      background: linear-gradient(135deg, #6d28d9 0%, #06afd0 100%);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(109,40,217,0.4);
+    }
+    .btn-gradient:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .nav-link { transition: all 0.2s; color: #a89fd4; }
+    .nav-link.nav-active {
+      background: linear-gradient(135deg, #6d28d9, #5b21b6);
+      color: #fff !important;
+      box-shadow: 0 0 16px rgba(124,58,237,0.35);
+    }
+    .nav-link:not(.nav-active):hover { background: rgba(124,58,237,0.15); color: #c4b5fd; }
+
+    .stat-card {
+      background: linear-gradient(160deg, #1e1b40 0%, #1a1838 100%);
+      border: 1px solid #2e2b55;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(124,58,237,0.22);
+      border-color: #7c3aed;
+    }
+
+    select, input { background: rgba(18,17,42,0.8) !important; color: #e2dff5 !important; }
+    option { background: #1c1a3a; color: #e2dff5; }
+
+    .scroll-main { flex: 1; overflow-y: auto; min-width: 0; }
+    .content-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+  </style>
 </head>
-<body>
-    
+<body class="animate-fade-in">
+
+<div style="display:flex; flex-direction:column; height:100vh; overflow:hidden;">
+
+  <!-- ── TOP HEADER ── -->
+  <header class="shrink-0 z-50 glass" style="border-bottom:1px solid rgba(139,92,246,0.2)">
+    <div class="px-6 py-3 flex items-center gap-4">
+      <a href="../customer/customer.html" class="flex items-center gap-2 shrink-0">
+        <div class="w-9 h-9 rounded-xl btn-gradient flex items-center justify-center shadow-glow">
+          <i class="fa-solid fa-wave-square text-white text-sm"></i>
+        </div>
+        <span class="font-black text-lg tracking-tight grad-text hidden sm:block">Talisay Hardware</span>
+      </a>
+
+      <div class="flex-1 flex items-center gap-3 ml-2">
+        <div class="hidden sm:block w-px h-5 bg-border"></div>
+        <h1 class="font-bold text-white text-base tracking-wide">Admin</h1>
+      </div>
+
+      <div class="flex items-center gap-3">
+
+        <!-- 🔔 MOCK DATA: Notification dot is always visible here.
+             Later, replace this with a real check — e.g. fetch('/api/notifications/unread')
+             and only show the dot if count > 0. -->
+        <button class="relative p-2.5 rounded-xl border border-border hover:border-brand-400 transition" style="background:rgba(28,26,58,0.7)">
+          <i class="fa-solid fa-bell text-brand-300 text-sm"></i>
+          <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent-400"></span>
+          <!-- 🔔 MOCK DATA END -->
+        </button>
+
+        <!-- 👤 MOCK DATA: Admin name and avatar initial are hardcoded as "Admin" / "A".
+             Later, replace with the logged-in user's name from your session or auth system.
+             e.g. fetch('/api/auth/me') → { name: "Juan", role: "admin" } -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border" style="background:rgba(28,26,58,0.7)">
+          <div class="w-7 h-7 rounded-full btn-gradient flex items-center justify-center text-white text-xs font-bold">A</div>
+          <span class="text-sm text-brand-200 font-medium hidden sm:block">Admin</span>
+        </div>
+        <!-- 👤 MOCK DATA END -->
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ── CONTENT ROW ── -->
+  <div class="content-row gap-0">
+
+    <!-- ══ LEFT SIDEBAR ══ -->
+    <aside class="flex flex-col shrink-0 border-r" style="width:220px; background:rgba(18,17,42,0.85); border-color:rgba(139,92,246,0.15); overflow-y:auto;">
+      <div class="p-4 flex flex-col gap-1">
+
+        <a href="../customer/customer.html"
+          class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-store w-4 text-sm"></i> Landing Page
+        </a>
+
+        <div class="my-2" style="border-top:1px solid rgba(139,92,246,0.15)"></div>
+        <p class="text-xs font-semibold text-accent-500 uppercase tracking-widest px-3 mb-1">Management</p>
+
+        <button onclick="showView('dashboard', this)"
+          class="nav-link nav-active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-gauge w-4 text-sm"></i> Dashboard
+        </button>
+        <button onclick="showView('products', this)"
+          class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-box w-4 text-sm"></i> Products
+        </button>
+        <button onclick="showView('orders', this)"
+          class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-receipt w-4 text-sm"></i> Orders
+        </button>
+        <button onclick="showView('customers', this)"
+          class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-users w-4 text-sm"></i> Customers
+        </button>
+        <button onclick="showView('reports', this)"
+          class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-chart-bar w-4 text-sm"></i> Reports
+        </button>
+
+        <div class="my-2" style="border-top:1px solid rgba(139,92,246,0.15)"></div>
+        <button class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left">
+          <i class="fa-solid fa-gear w-4 text-sm"></i> Settings
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <main class="scroll-main flex flex-col gap-6 p-6 pb-10 animate-slide-up">
+
+      <!-- ── DASHBOARD VIEW ── -->
+      <div id="view-dashboard">
+
+        <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+          <div>
+            <h2 class="text-xl font-black text-white">Dashboard</h2>
+            <p class="text-xs text-brand-300 mt-0.5">Overview of store performance</p>
+          </div>
+          <!-- Date filter — currently triggers a chart rebuild using random data.
+               Later, pass the selected value as a query param to your API:
+               fetch(`/api/dashboard?days=${value}`) then feed the response into buildCharts(). -->
+          <select id="date-filter" onchange="updateCharts(this.value)"
+            class="border border-border text-sm rounded-xl px-4 py-2.5 focus:border-brand-500 transition min-w-[160px]" style="background:rgba(28,26,58,0.85)">
+            <option value="7">Last 7 Days</option>
+            <option value="30" selected>Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="365">Last Year</option>
+          </select>
+        </div>
+
+        <!-- ──────────────────────────────────────────────
+             📊 MOCK DATA: Stat cards — all 4 numbers below
+             are hardcoded placeholders. Replace each one
+             by fetching your real DB aggregates, e.g.:
+             fetch('/api/stats?days=30') →
+             { revenue: 84230, orders: 1042, customers: 3891, products: 248, revenueChange: 12.4 }
+             Then inject the values into the DOM dynamically.
+        ─────────────────────────────────────────────── -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+
+          <div class="stat-card rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-brand-300 font-medium uppercase tracking-wide">Total Revenue</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(124,58,237,0.2)">
+                <i class="fa-solid fa-peso-sign text-brand-400 text-sm"></i>
+              </div>
+            </div>
+            <!-- 🔴 MOCK DATA: hardcoded ₱84,230 → replace with real SUM(total_amount) from orders table -->
+            <p class="text-2xl font-black text-white mb-1" id="stat-revenue">₱84,230</p>
+            <!-- 🔴 MOCK DATA: hardcoded +12.4% → replace with ((current - previous) / previous * 100) -->
+            <p class="text-xs text-accent-400" id="stat-revenue-change"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+12.4% vs last period</p>
+          </div>
+
+          <div class="stat-card rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-brand-300 font-medium uppercase tracking-wide">Orders</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(6,175,208,0.15)">
+                <i class="fa-solid fa-receipt text-accent-400 text-sm"></i>
+              </div>
+            </div>
+            <!-- 🔴 MOCK DATA: hardcoded 1,042 → replace with real COUNT(*) from orders table -->
+            <p class="text-2xl font-black text-white mb-1" id="stat-orders">1,042</p>
+            <!-- 🔴 MOCK DATA: hardcoded +8.1% → replace with real period-over-period comparison -->
+            <p class="text-xs text-accent-400" id="stat-orders-change"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+8.1% vs last period</p>
+          </div>
+
+          <div class="stat-card rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-brand-300 font-medium uppercase tracking-wide">Customers</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(124,58,237,0.2)">
+                <i class="fa-solid fa-users text-brand-400 text-sm"></i>
+              </div>
+            </div>
+            <!-- 🔴 MOCK DATA: hardcoded 3,891 → replace with real COUNT(*) from customers/users table -->
+            <p class="text-2xl font-black text-white mb-1" id="stat-customers">3,891</p>
+            <!-- 🔴 MOCK DATA: hardcoded +5.3% → replace with real period-over-period comparison -->
+            <p class="text-xs text-accent-400" id="stat-customers-change"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+5.3% vs last period</p>
+          </div>
+
+          <div class="stat-card rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs text-brand-300 font-medium uppercase tracking-wide">Products</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(6,175,208,0.15)">
+                <i class="fa-solid fa-box text-accent-400 text-sm"></i>
+              </div>
+            </div>
+            <!-- 🔴 MOCK DATA: hardcoded 248 → replace with real COUNT(*) from products table where status='active' -->
+            <p class="text-2xl font-black text-white mb-1" id="stat-products">248</p>
+            <p class="text-xs text-brand-300">Active listings</p>
+          </div>
+
+        </div>
+        <!-- 📊 MOCK DATA END (stat cards) -->
+
+        <!-- Charts -->
+        <div class="flex flex-col gap-5">
+
+          <!-- ──────────────────────────────────────────────
+               📈 MOCK DATA: Users Activity chart
+               Currently filled with randomData() — random numbers on every load.
+               Later, replace by fetching real daily active user counts from your DB:
+               fetch('/api/activity?days=30') →
+               { labels: ['May 1','May 2',...], activeUsers: [120,98,...], newSignups: [14,8,...] }
+               Then pass those arrays directly into the chart datasets instead of randomData().
+          ─────────────────────────────────────────────── -->
+          <div class="glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-brand-200 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-accent-400"></i> Users Activity
+              </h3>
+              <div class="flex gap-2">
+                <span class="text-xs px-2 py-1 rounded-lg border border-border text-brand-300" style="background:rgba(124,58,237,0.1)">Active Users</span>
+                <span class="text-xs px-2 py-1 rounded-lg border border-border text-accent-300" style="background:rgba(6,175,208,0.1)">New Signups</span>
+              </div>
+            </div>
+            <div style="height:220px; position:relative;">
+              <canvas id="chart-users-activity"></canvas>
+            </div>
+          </div>
+          <!-- 📈 MOCK DATA END (users activity chart) -->
+
+          <!-- ──────────────────────────────────────────────
+               📊 MOCK DATA: Sales Overview chart
+               Currently filled with randomData() — random numbers on every load.
+               Later, replace by fetching real daily revenue + order counts:
+               fetch('/api/sales?days=30') →
+               { labels: ['May 1','May 2',...], revenue: [4200,3100,...], orders: [12,8,...] }
+               Then pass those arrays directly into the chart datasets instead of randomData().
+          ─────────────────────────────────────────────── -->
+          <div class="glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-brand-200 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar text-brand-400"></i> Sales Overview
+              </h3>
+              <div class="flex gap-2">
+                <span class="text-xs px-2 py-1 rounded-lg border border-border text-brand-300" style="background:rgba(124,58,237,0.1)">Revenue</span>
+                <span class="text-xs px-2 py-1 rounded-lg border border-border text-accent-300" style="background:rgba(6,175,208,0.1)">Orders</span>
+              </div>
+            </div>
+            <div style="height:220px; position:relative;">
+              <canvas id="chart-sales"></canvas>
+            </div>
+          </div>
+          <!-- 📊 MOCK DATA END (sales chart) -->
+
+        </div>
+
+        <!-- ──────────────────────────────────────────────
+             🧾 MOCK DATA: Recent Orders table
+             Currently renders 8 fake rows using hardcoded arrays of names, products, and random amounts.
+             Later, replace renderOrdersTable() with a real fetch:
+             fetch('/api/orders?limit=8&sort=recent') →
+             [ { id: 'TH-1001', customer: 'Juan', product: 'Drill Bit Set', amount: 1250.00, status: 'Delivered' }, ... ]
+             Then loop over the real response to build the table rows.
+        ─────────────────────────────────────────────── -->
+        <div class="glass rounded-2xl p-5 mt-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-brand-200 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-accent-400"></i> Recent Orders
+            </h3>
+            <button class="text-xs text-accent-400 hover:text-accent-300 transition font-medium">
+              View All <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(139,92,246,0.15)">
+                  <th class="text-left text-xs text-brand-300 font-semibold uppercase tracking-wide pb-3 pr-4">Order</th>
+                  <th class="text-left text-xs text-brand-300 font-semibold uppercase tracking-wide pb-3 pr-4">Customer</th>
+                  <th class="text-left text-xs text-brand-300 font-semibold uppercase tracking-wide pb-3 pr-4">Product</th>
+                  <th class="text-left text-xs text-brand-300 font-semibold uppercase tracking-wide pb-3 pr-4">Amount</th>
+                  <th class="text-left text-xs text-brand-300 font-semibold uppercase tracking-wide pb-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body">
+                <!-- Rows injected by renderOrdersTable() below -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- 🧾 MOCK DATA END (recent orders table) -->
+
+      </div><!-- /view-dashboard -->
+
+      <!-- Placeholder views -->
+      <div id="view-products" class="hidden">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-xl font-black text-white">Products</h2>
+            <p class="text-xs text-brand-300 mt-0.5">Manage your product catalog</p>
+          </div>
+          <button class="btn-gradient text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center text-brand-300">
+          <i class="fa-solid fa-box text-4xl mb-3 block text-brand-400 opacity-40"></i>
+          <p class="font-semibold">Products management panel coming soon</p>
+        </div>
+      </div>
+
+      <div id="view-orders" class="hidden">
+        <div class="mb-5">
+          <h2 class="text-xl font-black text-white">Orders</h2>
+          <p class="text-xs text-brand-300 mt-0.5">Track and manage customer orders</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center text-brand-300">
+          <i class="fa-solid fa-receipt text-4xl mb-3 block text-accent-400 opacity-40"></i>
+          <p class="font-semibold">Orders management panel coming soon</p>
+        </div>
+      </div>
+
+      <div id="view-customers" class="hidden">
+        <div class="mb-5">
+          <h2 class="text-xl font-black text-white">Customers</h2>
+          <p class="text-xs text-brand-300 mt-0.5">View and manage customer accounts</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center text-brand-300">
+          <i class="fa-solid fa-users text-4xl mb-3 block text-brand-400 opacity-40"></i>
+          <p class="font-semibold">Customers panel coming soon</p>
+        </div>
+      </div>
+
+      <div id="view-reports" class="hidden">
+        <div class="mb-5">
+          <h2 class="text-xl font-black text-white">Reports</h2>
+          <p class="text-xs text-brand-300 mt-0.5">Analytics and insights</p>
+        </div>
+        <div class="glass rounded-2xl p-8 text-center text-brand-300">
+          <i class="fa-solid fa-chart-bar text-4xl mb-3 block text-accent-400 opacity-40"></i>
+          <p class="font-semibold">Reports panel coming soon</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  VIEW SWITCHER — no mock data here, just UI logic
+// ════════════════════════════════════════════════════════════
+const views = ['dashboard','products','orders','customers','reports'];
+function showView(name, btn) {
+  views.forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.classList.toggle('hidden', v !== name);
+  });
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-active'));
+  if (btn) btn.classList.add('nav-active');
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  🔴 MOCK DATA — CHART HELPERS
+//  These two functions exist only because there's no real API yet.
+//  When the backend is ready:
+//    - generateLabels() can stay (or be replaced by labels from the API response)
+//    - randomData() should be DELETED entirely — replace with real arrays from fetch()
+// ════════════════════════════════════════════════════════════
+
+// Generates date labels for the x-axis (keep this or let the API return labels directly)
+function generateLabels(days) {
+  const labels = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-US', { month:'short', day:'numeric' }));
+  }
+  const step = Math.ceil(days / 12);
+  return labels.filter((_, i) => i % step === 0);
+}
+
+// 🔴 MOCK DATA: Generates fake random numbers — DELETE this when real API is connected.
+//    Replace all randomData() calls with the actual arrays from your API response.
+function randomData(count, min, max) {
+  return Array.from({ length: count }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+}
+// 🔴 MOCK DATA END
+
+
+// ════════════════════════════════════════════════════════════
+//  CHART SETUP — styling config (keep as-is, not mock data)
+// ════════════════════════════════════════════════════════════
+Chart.defaults.color = '#a89fd4';
+Chart.defaults.borderColor = 'rgba(46,43,85,0.6)';
+Chart.defaults.font.family = 'Inter';
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(28,26,60,0.95)',
+      borderColor: 'rgba(139,92,246,0.4)',
+      borderWidth: 1,
+      titleColor: '#c4b5fd',
+      bodyColor: '#e2dff5',
+      padding: 10,
+      cornerRadius: 10,
+    }
+  },
+  scales: {
+    x: { grid: { color: 'rgba(46,43,85,0.5)' }, ticks: { maxTicksLimit: 8 } },
+    y: { grid: { color: 'rgba(46,43,85,0.5)' } },
+  }
+};
+
+let chartUsersActivity, chartSales;
+
+
+// ════════════════════════════════════════════════════════════
+//  buildCharts(days)
+//
+//  🔴 MOCK DATA: Currently uses randomData() for all data points.
+//  When backend is ready, replace the body of this function like so:
+//
+//    async function buildCharts(days) {
+//      const [activityRes, salesRes] = await Promise.all([
+//        fetch(`/api/activity?days=${days}`),
+//        fetch(`/api/sales?days=${days}`)
+//      ]);
+//      const activity = await activityRes.json();
+//      const sales    = await salesRes.json();
+//
+//      // activity = { labels: [...], activeUsers: [...], newSignups: [...] }
+//      // sales    = { labels: [...], revenue: [...], orders: [...] }
+//
+//      // Then replace randomData() calls below with:
+//      //   data: activity.activeUsers
+//      //   data: activity.newSignups
+//      //   data: sales.revenue
+//      //   data: sales.orders
+//    }
+// ════════════════════════════════════════════════════════════
+function buildCharts(days) {
+  const labels = generateLabels(days); // 🔴 MOCK DATA: replace with labels from API response
+  const n = labels.length;
+
+  if (chartUsersActivity) chartUsersActivity.destroy();
+  chartUsersActivity = new Chart(document.getElementById('chart-users-activity'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Active Users',
+          data: randomData(n, 80, 350), // 🔴 MOCK DATA → replace with activity.activeUsers from API
+          borderColor: '#7c3aed',
+          backgroundColor: 'rgba(124,58,237,0.12)',
+          tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#7c3aed',
+        },
+        {
+          label: 'New Signups',
+          data: randomData(n, 10, 90), // 🔴 MOCK DATA → replace with activity.newSignups from API
+          borderColor: '#06afd0',
+          backgroundColor: 'rgba(6,175,208,0.08)',
+          tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#06afd0',
+        }
+      ]
+    },
+    options: chartOptions,
+  });
+
+  if (chartSales) chartSales.destroy();
+  chartSales = new Chart(document.getElementById('chart-sales'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue (₱)',
+          data: randomData(n, 1000, 8000), // 🔴 MOCK DATA → replace with sales.revenue from API
+          backgroundColor: 'rgba(124,58,237,0.6)',
+          borderColor: '#7c3aed',
+          borderWidth: 1,
+          borderRadius: 6,
+        },
+        {
+          label: 'Orders',
+          data: randomData(n, 5, 60), // 🔴 MOCK DATA → replace with sales.orders from API
+          backgroundColor: 'rgba(6,175,208,0.5)',
+          borderColor: '#06afd0',
+          borderWidth: 1,
+          borderRadius: 6,
+        }
+      ]
+    },
+    options: chartOptions,
+  });
+}
+
+// Called by the date dropdown — keep this function, just update buildCharts() above
+function updateCharts(days) { buildCharts(parseInt(days)); }
+
+
+// ════════════════════════════════════════════════════════════
+//  🔴 MOCK DATA — RECENT ORDERS TABLE
+//  Everything inside renderOrdersTable() is fake.
+//  When backend is ready, replace the entire function with:
+//
+//    async function renderOrdersTable() {
+//      const res = await fetch('/api/orders?limit=8&sort=recent');
+//      const orders = await res.json();
+//      // orders = [{ id, customerName, productName, totalAmount, status }, ...]
+//      const tbody = document.getElementById('orders-table-body');
+//      tbody.innerHTML = orders.map(order => `
+//        <tr style="border-bottom:1px solid rgba(46,43,85,0.4)">
+//          <td ...>#${order.id}</td>
+//          <td ...>${order.customerName}</td>
+//          <td ...>${order.productName}</td>
+//          <td ...>₱${order.totalAmount}</td>
+//          <td ...><span class="${statusClass(order.status)}">${order.status}</span></td>
+//        </tr>`).join('');
+//    }
+// ════════════════════════════════════════════════════════════
+
+// 🔴 MOCK DATA: Fake status styles — keep the style map, remove the fake data arrays
+const statusStyles = {
+  'Delivered':  'bg-green-900/40 text-green-400 border border-green-700/40',
+  'Processing': 'bg-yellow-900/40 text-yellow-400 border border-yellow-700/40',
+  'Shipped':    'bg-cyan-900/40 text-cyan-400 border border-cyan-700/40',
+  'Cancelled':  'bg-red-900/40 text-red-400 border border-red-700/40',
+};
+
+// 🔴 MOCK DATA: Fake product names — DELETE when real API is connected
+const mockProducts = ['Drill Bit Set', 'PVC Pipes (10ft)', 'Steel Bolts 100pc', 'Paint Brush Kit', 'Wood Screws', 'Concrete Mix 50kg', 'Measuring Tape 5m'];
+
+// 🔴 MOCK DATA: Fake customer names — DELETE when real API is connected
+const mockCustomers = ['Juan Dela Cruz', 'Maria Santos', 'Pedro Reyes', 'Ana Lim', 'Carlo Bautista', 'Rosa Mendoza', 'Miguel Torres'];
+
+// 🔴 MOCK DATA: Fake status rotation — DELETE when real API is connected
+const mockStatuses = ['Delivered', 'Processing', 'Shipped', 'Cancelled'];
+
+function renderOrdersTable() {
+  const tbody = document.getElementById('orders-table-body');
+  let rows = '';
+  for (let i = 0; i < 8; i++) {
+    // 🔴 MOCK DATA: All values below (order id, customer, product, amount, status) are fake.
+    //    Replace with real fields from your API response.
+    const statusLabel = mockStatuses[Math.floor(Math.random() * mockStatuses.length)]; // 🔴 MOCK → order.status
+    const statusCls   = statusStyles[statusLabel];
+    const amt         = (Math.random() * 3000 + 200).toFixed(2);                       // 🔴 MOCK → order.totalAmount
+    const customer    = mockCustomers[i % mockCustomers.length];                        // 🔴 MOCK → order.customerName
+    const product     = mockProducts[i % mockProducts.length];                          // 🔴 MOCK → order.productName
+    const orderId     = `TH-${1000 + i}`;                                               // 🔴 MOCK → order.id
+
+    rows += `
+      <tr style="border-bottom:1px solid rgba(46,43,85,0.4)">
+        <td class="py-3 pr-4 font-mono text-brand-300 text-xs">#${orderId}</td>
+        <td class="py-3 pr-4 text-brand-100 font-medium">${customer}</td>
+        <td class="py-3 pr-4 text-brand-200">${product}</td>
+        <td class="py-3 pr-4 font-bold text-white">₱${amt}</td>
+        <td class="py-3">
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusCls}">${statusLabel}</span>
+        </td>
+      </tr>`;
+  }
+  tbody.innerHTML = rows;
+}
+// 🔴 MOCK DATA END (orders table)
+
+
+// ════════════════════════════════════════════════════════════
+//  INIT — runs on page load
+// ════════════════════════════════════════════════════════════
+buildCharts(30);       // 🔴 uses mock data until API is wired up
+renderOrdersTable();   // 🔴 uses mock data until API is wired up
+</script>
 </body>
 </html>
