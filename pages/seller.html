@@ -1,11 +1,573 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iSand Seller – Dashboard & Products</title>
+  <meta name="description" content="Manage your iSand seller account. View revenue analytics, track total products and sales, and manage your product catalog." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50:  '#ede9fe', 100: '#ddd6fe', 200: '#c4b5fd', 300: '#a78bfa',
+              400: '#8b5cf6', 500: '#7c3aed', 600: '#6d28d9', 700: '#5b21b6',
+              800: '#4c1d95', 900: '#3b0764',
+            },
+            accent: {
+              50:  '#f0fdff', 100: '#ccf7fe', 200: '#99eefb', 300: '#52dff6',
+              400: '#17c9e8', 500: '#06afd0', 600: '#088bad', 700: '#0c6f8c',
+              800: '#105971', 900: '#124a5e',
+            },
+            surface: '#12112a',
+            card:    '#1c1a3a',
+            border:  '#2e2b55',
+          },
+          boxShadow: {
+            glow:   '0 0 32px rgba(124,58,237,0.35)',
+            glowCy: '0 0 24px rgba(6,175,208,0.25)',
+            card:   '0 4px 28px rgba(10,8,40,0.45)',
+          },
+          animation: {
+            'fade-in':  'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'slide-right': 'slideRight 0.35s ease-out',
+          },
+          keyframes: {
+            fadeIn:    { from:{ opacity:0 }, to:{ opacity:1 } },
+            slideUp:   { from:{ opacity:0, transform:'translateY(24px)' }, to:{ opacity:1, transform:'translateY(0)' } },
+            slideRight:{ from:{ opacity:0, transform:'translateX(-24px)' }, to:{ opacity:1, transform:'translateX(0)' } },
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* ── Base ── */
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(145deg, #090820 0%, #0e0c26 30%, #140e30 60%, #1a0d38 100%);
+      background-attachment: fixed;
+      color: #e2dff5;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #12112a; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#7c3aed,#06afd0); border-radius: 4px; }
+
+    /* ── View layout ── */
+    .seller-view { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
+    .seller-view.active { display: flex; }
+    .content-row { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+    .scroll-main { flex: 1; overflow-y: auto; min-width: 0; }
+    .sidebar-fixed { overflow-y: auto; flex-shrink: 0; }
+
+    /* ── Glass card ── */
+    .glass {
+      background: rgba(28, 26, 60, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.18);
+    }
+
+    /* ── Nav active ── */
+    .nav-link.nav-active {
+      background: linear-gradient(135deg,#6d28d9,#5b21b6) !important;
+      color: #fff !important;
+      box-shadow: 0 0 16px rgba(124,58,237,0.35);
+    }
+    .nav-link:not(.nav-active):hover {
+      background: rgba(124,58,237,0.15);
+      color: #c4b5fd;
+    }
+
+    /* ── Gradient text ── */
+    .grad-text {
+      background: linear-gradient(135deg,#a78bfa 0%,#52dff6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Primary gradient button ── */
+    .btn-gradient {
+      background: linear-gradient(135deg, #6d28d9 0%, #06afd0 100%);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(109,40,217,0.4);
+    }
+    .btn-gradient:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(109,40,217,0.55);
+    }
+    .btn-gradient:active { transform: translateY(0); }
+
+    /* ── Product card ── */
+    .product-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      background: linear-gradient(160deg, #1e1b40 0%, #1a1838 100%);
+      border: 1px solid #2e2b55;
+    }
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 18px 44px rgba(124,58,237,0.26), 0 4px 14px rgba(6,175,208,0.1);
+      border-color: #7c3aed;
+    }
+    .product-card:active { transform: translateY(-2px) scale(0.98); }
+
+    /* ── Stat card ── */
+    .stat-card {
+      background: linear-gradient(160deg, #1e1b40 0%, #1a1838 100%);
+      border: 1px solid rgba(139,92,246,0.22);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 36px rgba(124,58,237,0.22);
+    }
+
+    /* ── Inputs ── */
+    input, textarea, select {
+      background: rgba(18,17,42,0.8) !important;
+      color: #e2dff5 !important;
+    }
+    input::placeholder, textarea::placeholder { color: #6b65a0 !important; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(124,58,237,0.5);
+    }
+    option { background: #1c1a3a; color: #e2dff5; }
+
+    /* ── Toast ── */
+    #toast { transition: opacity 0.3s ease, transform 0.3s ease; }
+
+    /* ── Shimmer ── */
+    @keyframes shimmer {
+      0%  { background-position: -400px 0; }
+      100%{ background-position:  400px 0; }
+    }
+
+    /* ── Delete mode card border ── */
+    .product-card.delete-selected {
+      border-color: #7c3aed !important;
+      box-shadow: 0 0 20px rgba(124,58,237,0.4) !important;
+    }
+
+    /* ── Period dropdown ── */
+    #period-dropdown {
+      background: rgba(28,26,58,0.9) !important;
+      border: 1px solid rgba(139,92,246,0.3);
+      color: #a78bfa !important;
+      cursor: pointer;
+    }
+    #period-dropdown:focus { box-shadow: 0 0 0 2px rgba(124,58,237,0.4); }
+
+    /* ── Pagination btn hover ── */
+    .pag-btn:not([disabled]):hover {
+      border-color: rgba(124,58,237,0.5) !important;
+      background: rgba(124,58,237,0.15) !important;
+    }
+    .pag-btn[disabled] { cursor: not-allowed; opacity: 0.45; }
+
+    /* ── Modal backdrop ── */
+    .modal-overlay {
+      background: rgba(9,8,32,0.75);
+      backdrop-filter: blur(8px);
+    }
+  </style>
 </head>
 <body>
-    
+
+<!-- ═══════════════════════════════════════════════
+     SHARED HEADER
+═══════════════════════════════════════════════ -->
+<header class="shrink-0 z-50 glass border-b" style="border-bottom-color:rgba(139,92,246,0.2); position:fixed; top:0; left:0; right:0;">
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2 shrink-0">
+      <div class="w-9 h-9 rounded-xl btn-gradient flex items-center justify-center shadow-glow">
+        <i class="fa-solid fa-store text-white text-sm"></i>
+      </div>
+      <div class="hidden sm:flex flex-col leading-none">
+        <span class="font-black text-lg tracking-tight grad-text">iSand</span>
+        <span class="text-[10px] font-semibold uppercase tracking-widest" style="color:#6b65a0">Seller</span>
+      </div>
+    </a>
+
+    <div class="flex-1"></div>
+
+    <!-- Seller badge -->
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border" style="background:rgba(28,26,58,0.7);border-color:rgba(139,92,246,0.25)">
+        <div class="w-6 h-6 rounded-full btn-gradient flex items-center justify-center text-white text-xs font-bold">S</div>
+        <span class="text-sm font-semibold" style="color:#c4b5fd">My Store</span>
+      </div>
+      <div class="w-2 h-2 rounded-full" style="background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,0.6)" title="Store Online"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     DASHBOARD VIEW
+═══════════════════════════════════════════════ -->
+<div id="view-dashboard" class="seller-view animate-fade-in" style="padding-top:60px;">
+  <div class="content-row max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6 gap-6">
+
+    <!-- ── Left Sidebar ── -->
+    <aside class="hidden lg:flex flex-col gap-2 w-52 shrink-0 sidebar-fixed">
+      <div class="glass rounded-2xl p-4 animate-slide-right">
+        <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#8b5cf6">Navigation</p>
+        <nav class="flex flex-col gap-1">
+          <button id="nav-home-btn"
+            onclick="showDashboard()"
+            class="nav-link nav-active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white transition w-full text-left">
+            <i class="fa-solid fa-house w-4"></i> Home
+          </button>
+          <button id="nav-products-btn"
+            onclick="showProducts()"
+            class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left" style="color:#a78bfa">
+            <i class="fa-solid fa-box w-4"></i> Products
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ── Center: Dashboard Content ── -->
+    <main class="scroll-main flex flex-col gap-6 animate-slide-up px-1 pb-8">
+
+      <!-- Dashboard header -->
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 class="text-2xl font-black" style="color:#e2dff5">Dashboard</h1>
+          <p class="text-sm mt-0.5" style="color:#6b65a0">Welcome back, Seller 👋</p>
+        </div>
+        <!-- Revenue badge -->
+        <div class="flex items-center gap-2 px-4 py-2 rounded-xl border" style="background:rgba(28,26,58,0.7);border-color:rgba(139,92,246,0.25)">
+          <i class="fa-solid fa-sack-dollar" style="color:#52dff6"></i>
+          <span class="font-bold text-sm" style="color:#e2dff5">Revenue</span>
+          <span id="stat-revenue" class="font-black text-sm grad-text">$0.00</span>
+        </div>
+      </div>
+
+      <!-- ── Analytics Chart Card ── -->
+      <div class="glass rounded-2xl p-5" style="border-color:rgba(124,58,237,0.2)">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest mb-0.5" style="color:#8b5cf6">Analytics</p>
+            <h2 class="text-lg font-bold" style="color:#e2dff5">Revenue Overview</h2>
+          </div>
+          <!-- Date / Period Dropdown -->
+          <div class="relative">
+            <select id="period-dropdown" class="rounded-xl pl-3 pr-8 py-2 text-sm font-semibold appearance-none cursor-pointer transition focus:outline-none" style="min-width:130px">
+              <option value="7d">Last 7 Days</option>
+              <option value="30d" selected>Last 30 Days</option>
+              <option value="90d">Last 90 Days</option>
+              <option value="1y">Last Year</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style="color:#7c3aed"></i>
+          </div>
+        </div>
+        <!-- Chart -->
+        <div class="rounded-xl overflow-hidden" style="height:240px; background:rgba(12,11,30,0.5); padding:16px;">
+          <canvas id="revenue-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- ── Stat Cards ── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Total Products -->
+        <div class="stat-card rounded-2xl p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,rgba(109,40,217,0.3),rgba(6,175,208,0.15));border:1px solid rgba(124,58,237,0.3)">
+            <i class="fa-solid fa-box text-lg" style="color:#a78bfa"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:#6b65a0">Total Products</p>
+            <p id="stat-total-products" class="text-3xl font-black grad-text">0</p>
+          </div>
+        </div>
+
+        <!-- Total Sales -->
+        <div class="stat-card rounded-2xl p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,rgba(6,175,208,0.3),rgba(109,40,217,0.15));border:1px solid rgba(6,175,208,0.3)">
+            <i class="fa-solid fa-chart-simple text-lg" style="color:#52dff6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:#6b65a0">Total Sales</p>
+            <p id="stat-total-sales" class="text-3xl font-black grad-text">0</p>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+</div><!-- /view-dashboard -->
+
+
+<!-- ═══════════════════════════════════════════════
+     PRODUCTS VIEW
+═══════════════════════════════════════════════ -->
+<div id="view-products" class="seller-view animate-fade-in" style="padding-top:60px;">
+  <div class="content-row max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6 gap-6">
+
+    <!-- ── Left Sidebar ── -->
+    <aside class="hidden lg:flex flex-col gap-2 w-52 shrink-0 sidebar-fixed">
+      <div class="glass rounded-2xl p-4 animate-slide-right">
+        <p class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#8b5cf6">Navigation</p>
+        <nav class="flex flex-col gap-1">
+          <button
+            onclick="showDashboard()"
+            class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition w-full text-left" style="color:#a78bfa">
+            <i class="fa-solid fa-house w-4"></i> Home
+          </button>
+          <button id="nav-products-btn2"
+            onclick="showProducts()"
+            class="nav-link nav-active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white transition w-full text-left">
+            <i class="fa-solid fa-box w-4"></i> Products
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ── Center: Products Content ── -->
+    <main class="scroll-main flex flex-col gap-5 animate-slide-up px-1 pb-8">
+
+      <!-- Products header -->
+      <div>
+        <h1 class="text-2xl font-black" style="color:#e2dff5">Products</h1>
+        <p class="text-sm mt-0.5" style="color:#6b65a0">Manage your product catalog</p>
+      </div>
+
+      <!-- ── Search Bar ── -->
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color:#8b5cf6"></i>
+        <input id="search-input" type="text" placeholder="Search products by name or category…"
+          class="w-full border rounded-xl pl-10 pr-4 py-3 text-sm transition"
+          style="border-color:rgba(46,43,85,0.8)" />
+      </div>
+
+      <!-- ── Action Buttons ── -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <button onclick="openAddModal()"
+          class="btn-gradient text-white text-sm font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2">
+          <i class="fa-solid fa-plus"></i> Add Products
+        </button>
+        <button id="delete-mode-btn"
+          onclick="toggleDeleteMode()"
+          class="text-white text-sm font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 transition"
+          style="background:linear-gradient(135deg,#3b1c6e,#5b21b6);box-shadow:0 4px 14px rgba(91,33,182,0.35)">
+          <i class="fa-solid fa-trash-can"></i> Delete Products
+        </button>
+      </div>
+
+      <!-- Delete confirm bar (hidden by default) -->
+      <div id="confirm-delete-bar" class="hidden items-center gap-3 px-4 py-3 rounded-xl animate-slide-up"
+        style="background:rgba(127,29,29,0.25);border:1px solid rgba(220,38,38,0.3)">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#f87171"></i>
+        <span class="text-sm" style="color:#fca5a5"><span id="delete-count">0</span> product(s) selected</span>
+        <button onclick="confirmDelete()"
+          class="ml-auto text-white text-sm font-bold px-4 py-2 rounded-xl transition"
+          style="background:linear-gradient(135deg,#991b1b,#dc2626)">
+          <i class="fa-solid fa-trash mr-1.5"></i>Confirm Delete
+        </button>
+      </div>
+
+      <!-- ── Products Catalog (Scrollable Grid) ── -->
+      <div class="glass rounded-2xl p-5" style="border-color:rgba(124,58,237,0.2)">
+        <p class="text-xs font-semibold uppercase tracking-widest mb-4" style="color:#8b5cf6">Products Catalog</p>
+        <!-- Grid -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- injected by JS -->
+        </div>
+        <!-- Pagination -->
+        <div id="pagination" class="flex items-center justify-center gap-2 mt-6 flex-wrap">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+</div><!-- /view-products -->
+
+
+<!-- ═══════════════════════════════════════════════
+     ADD PRODUCT MODAL
+═══════════════════════════════════════════════ -->
+<div id="add-modal" class="fixed inset-0 z-[998] hidden items-center justify-center modal-overlay">
+  <div class="glass rounded-2xl p-7 w-full max-w-lg mx-4 animate-slide-up" style="border-color:rgba(124,58,237,0.35);box-shadow:0 24px 64px rgba(10,8,40,0.7)">
+
+    <!-- Modal header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-black" style="color:#e2dff5">Add New Product</h2>
+        <p class="text-xs mt-0.5" style="color:#6b65a0">Fill in the details below</p>
+      </div>
+      <button onclick="closeAddModal()" aria-label="Close"
+        class="w-9 h-9 rounded-xl flex items-center justify-center transition border hover:border-brand-500"
+        style="background:rgba(28,26,58,0.8);border-color:rgba(46,43,85,0.8);color:#6b65a0">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form id="add-product-form" class="flex flex-col gap-4">
+
+      <!-- Name -->
+      <div>
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#8b5cf6">Product Name *</label>
+        <input id="ap-name" type="text" placeholder="e.g. Wireless Bluetooth Speaker"
+          class="w-full border rounded-xl px-4 py-2.5 text-sm transition" style="border-color:rgba(46,43,85,0.8)" required />
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#8b5cf6">Category *</label>
+        <div class="relative">
+          <select id="ap-category" class="w-full border rounded-xl px-4 py-2.5 text-sm transition appearance-none" style="border-color:rgba(46,43,85,0.8)" required>
+            <option value="">Select a category…</option>
+            <option value="electronics">Electronics</option>
+            <option value="fashion">Fashion</option>
+            <option value="accessories">Accessories</option>
+            <option value="home">Home & Living</option>
+            <option value="sports">Sports</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style="color:#7c3aed"></i>
+        </div>
+      </div>
+
+      <!-- Price + Stock row -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#8b5cf6">Price ($) *</label>
+          <input id="ap-price" type="number" min="0.01" step="0.01" placeholder="0.00"
+            class="w-full border rounded-xl px-4 py-2.5 text-sm transition" style="border-color:rgba(46,43,85,0.8)" required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#8b5cf6">Stock *</label>
+          <input id="ap-stock" type="number" min="0" step="1" placeholder="0"
+            class="w-full border rounded-xl px-4 py-2.5 text-sm transition" style="border-color:rgba(46,43,85,0.8)" required />
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#8b5cf6">Description</label>
+        <textarea id="ap-description" rows="3" placeholder="Brief product description…"
+          class="w-full border rounded-xl px-4 py-2.5 text-sm resize-none transition" style="border-color:rgba(46,43,85,0.8)"></textarea>
+      </div>
+
+      <!-- Pagination hint (user input section from wireframe) -->
+      <div class="flex gap-3 pt-1">
+        <button type="submit"
+          class="btn-gradient flex-1 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus"></i> Add Product
+        </button>
+        <button type="button" onclick="closeAddModal()"
+          class="px-5 py-3 rounded-xl font-semibold text-sm transition border"
+          style="background:rgba(28,26,58,0.7);border-color:rgba(46,43,85,0.8);color:#a78bfa">
+          Cancel
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     PRODUCT DETAIL POPUP
+═══════════════════════════════════════════════ -->
+<div id="product-popup" class="fixed inset-0 z-[999] hidden items-center justify-center modal-overlay">
+  <div class="glass rounded-2xl p-7 w-full max-w-md mx-4 animate-slide-up" style="border-color:rgba(124,58,237,0.35);box-shadow:0 24px 64px rgba(10,8,40,0.7)">
+
+    <!-- Close -->
+    <div class="flex items-center justify-between mb-5">
+      <p class="text-xs font-semibold uppercase tracking-widest" style="color:#8b5cf6">Product Preview</p>
+      <button onclick="closeProductDetail()" aria-label="Close popup"
+        class="w-9 h-9 rounded-xl flex items-center justify-center transition border"
+        style="background:rgba(28,26,58,0.8);border-color:rgba(46,43,85,0.8);color:#6b65a0">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Emoji + Name -->
+    <div class="flex flex-col items-center text-center gap-3 mb-5">
+      <div class="w-24 h-24 rounded-2xl flex items-center justify-center text-5xl"
+        style="background:linear-gradient(160deg,#1a1642,#12103a);border:1px solid rgba(124,58,237,0.2)">
+        <span id="popup-emoji">📦</span>
+      </div>
+      <div>
+        <span id="popup-category"
+          class="inline-block text-[11px] font-bold px-3 py-0.5 rounded-full mb-1 capitalize"
+          style="background:rgba(124,58,237,0.2);color:#a78bfa;border:1px solid rgba(124,58,237,0.3)">
+        </span>
+        <h2 id="popup-name" class="text-xl font-black" style="color:#e2dff5"></h2>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-3 gap-3 mb-5">
+      <div class="rounded-xl p-3 text-center" style="background:rgba(18,17,42,0.8);border:1px solid rgba(46,43,85,0.6)">
+        <p class="text-xs mb-1" style="color:#6b65a0">Price</p>
+        <p id="popup-price" class="text-base font-black grad-text"></p>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:rgba(18,17,42,0.8);border:1px solid rgba(46,43,85,0.6)">
+        <p class="text-xs mb-1" style="color:#6b65a0">Stock</p>
+        <p id="popup-stock" class="text-base font-black"></p>
+      </div>
+      <div class="rounded-xl p-3 text-center" style="background:rgba(18,17,42,0.8);border:1px solid rgba(46,43,85,0.6)">
+        <p class="text-xs mb-1" style="color:#6b65a0">Sold</p>
+        <p id="popup-sales" class="text-base font-black" style="color:#52dff6"></p>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="rounded-xl p-4 mb-5" style="background:rgba(18,17,42,0.7);border:1px solid rgba(46,43,85,0.6)">
+      <p class="text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#6b65a0">Description</p>
+      <p id="popup-description" class="text-sm leading-relaxed" style="color:#c4b5fd"></p>
+    </div>
+
+    <button onclick="closeProductDetail()"
+      class="btn-gradient w-full text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2">
+      <i class="fa-solid fa-check"></i> Done
+    </button>
+  </div>
+</div>
+
+
+<!-- ── Toast ── -->
+<div id="toast"
+  class="fixed bottom-6 left-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-medium shadow-card"
+  style="transform:translateX(-50%) translateY(8px); opacity:0; pointer-events:none; background:rgba(28,26,58,0.95); border:1px solid rgba(124,58,237,0.3); color:#e2dff5; white-space:nowrap;">
+  <i id="toast-icon" class="fa-solid fa-circle-check text-green-400"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Mobile navigation FAB (small screens) -->
+<div class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-2xl shadow-glow"
+  style="background:rgba(28,26,58,0.95);border:1px solid rgba(124,58,237,0.3)">
+  <button onclick="showDashboard()" id="mob-home-btn"
+    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition"
+    style="background:linear-gradient(135deg,#6d28d9,#5b21b6);color:#fff">
+    <i class="fa-solid fa-house"></i><span class="hidden xs:inline">Home</span>
+  </button>
+  <button onclick="showProducts()" id="mob-products-btn"
+    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition"
+    style="color:#a78bfa">
+    <i class="fa-solid fa-box"></i><span class="hidden xs:inline">Products</span>
+  </button>
+</div>
+
+<script src="../assets/javascript/seller.js"></script>
 </body>
 </html>
